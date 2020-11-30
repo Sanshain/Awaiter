@@ -35,8 +35,10 @@ export default class Awaiting{
     timer: number = null;                       // задаение времени для ontimer    
     remove_onclean: boolean = true;             // режим чистки по дефолту
     private finished: boolean = null;           // flag that animation is finished
+    private onComplited: Function = null;
     /* флаг о том, что таймер не установлен */
     private stop_timer: number = null;          
+    private awaitContainer: HTMLElement = null;
 
     /**
      * Событие завершения анимации (происходит только при истечении limit)
@@ -64,7 +66,10 @@ export default class Awaiting{
                 ? (function (_elem) { this.onfinished(_elem.parentElement) }).bind(this)
                 : (function (_elem) { });
 
+
         if (hide) {
+
+            this.awaitContainer.style.display = 'none';
 
             for (var id in this.point_states) {
 
@@ -80,7 +85,7 @@ export default class Awaiting{
             }
         }
         else {
-
+                        
             for (var id in this.point_states) {
 
                 var elem = dom.obj(id);
@@ -88,7 +93,12 @@ export default class Awaiting{
                 elem.parentElement.removeChild(elem);
             }
             this.point_states = {};
+            
+            this.awaitContainer.parentElement.removeChild(this.awaitContainer);
+            console.log('awaitContainer was removed');
         }
+
+        if (this.onComplited && !this.finished) this.onComplited();
     };
 
     /**
@@ -100,7 +110,7 @@ export default class Awaiting{
      */
     stop (just_hide?: boolean) {
 
-        if (this.finished == false) {
+        if (this.finished === false) {
 
             // если задан finished=false, значит ожидается stop_timer. Выключаем:
             clearTimeout(this.stop_timer);
@@ -148,15 +158,22 @@ export default class Awaiting{
      * Запускает анимацию
      * @param elem - контейнер для элементов анимации
      */
-    start (elem: HTMLElement, options: { elem_quantity?: number, onfinishMessage?: string, limit?: number}) {
+    start (elem: HTMLElement, options: { 
+        blocks_amount?: number, 
+        onfinishMessage?: string, 
+        onComplited?: Function
+        limit?: number}) {        
 
         if (typeof options == "object") for (const key in options) this[key] = options[key];
 
-        elem = elem || document.getElementById('await__container');
+        this.awaitContainer = elem = elem || document.getElementById('await__container');
         if (!elem){
             throw new Error('Elem not found.' + 
                 'Define html tag with id="await__container" or pass any elem to start() as first param')
         }
+
+        if (window.getComputedStyle(elem).visibility == 'hidden') elem.style.visibility = 'visible';
+        if (window.getComputedStyle(elem).display == 'none') elem.style.display = 'block';
         
         if (!elem.id) throw new Error('you need have id for animate elem');
         if (this.onstart) this.onstart(elem);
