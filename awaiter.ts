@@ -34,8 +34,8 @@ export default class Awaiting{
     /* задаение времени для ontimer */
     timer: number = null;                       // задаение времени для ontimer    
     remove_onclean: boolean = true;             // режим чистки по дефолту
-    private finished: boolean = null;           // flag that animation is finished
-    private onComplited: Function = null;
+    private finished: boolean = null;           // flag that animation is finished (выполняет по достижения лимита)
+    private onComplited: Function = null;       // выполняется, если stop() вызвана до итечения лимита времени
     /* флаг о том, что таймер не установлен */
     private stop_timer: number = null;          
     private awaitContainer: HTMLElement = null;
@@ -93,8 +93,11 @@ export default class Awaiting{
                 elem.parentElement.removeChild(elem);
             }
             this.point_states = {};
-            
-            this.awaitContainer.parentElement.removeChild(this.awaitContainer);
+            if (this.awaitContainer.parentElement)
+                this.awaitContainer.parentElement.removeChild(this.awaitContainer);
+            else{
+                console.log('awaitContainer: time bound is outside');    
+            }
             console.log('awaitContainer was removed');
         }
 
@@ -176,7 +179,7 @@ export default class Awaiting{
         if (window.getComputedStyle(elem).display == 'none') elem.style.display = 'block';
         
         if (!elem.id) throw new Error('you need have id for animate elem');
-        if (this.onstart) this.onstart(elem);
+        if (this.onstart) this.onstart(elem, this);
         if (this.ontimer && this.timer) {
 
             this._timeouts.push(
